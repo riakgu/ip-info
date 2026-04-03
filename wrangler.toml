@@ -1,0 +1,9 @@
+name = "ip-info"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+# Custom domain (optional)
+# Uncomment and update when ready to deploy with a custom domain:
+# [routes]
+# route = "ip.yourdomain.com/*"
+# zone_name = "yourdomain.com"
