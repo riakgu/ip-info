@@ -72,57 +72,31 @@ function jsonResponse(info) {
 
 function htmlResponse(info) {
   const flag = getCountryFlag(info.country);
-  const location = [info.city, info.region, info.country].filter(Boolean).join(', ');
+  const location = [info.city, info.region].filter(Boolean).join(', ');
   const coords = info.latitude && info.longitude ? `${info.latitude}, ${info.longitude}` : null;
   const regionFull = [info.region, info.regionCode ? `(${info.regionCode})` : null].filter(Boolean).join(' ');
+  const countryDisplay = info.country ? `${flag} ${info.country}${info.isEU ? ' \u00b7 EU' : ''}` : '\u2014';
 
-  const sections = [
-    {
-      title: 'Location',
-      rows: [
-        { icon: '📍', label: 'Location', value: location || '—', id: 'location' },
-        { icon: flag || '🏳️', label: 'Country', value: info.country ? `${info.country}${info.isEU ? ' · EU' : ''}` : '—', id: 'country' },
-        { icon: '🏘️', label: 'Region', value: regionFull || '—', id: 'region' },
-        { icon: '🗺️', label: 'Coordinates', value: coords || '—', id: 'coords' },
-        { icon: '📮', label: 'Postal Code', value: info.postal || '—', id: 'postal' },
-        { icon: '🕐', label: 'Timezone', value: info.timezone || '—', id: 'timezone' },
-      ],
-    },
-    {
-      title: 'Network',
-      rows: [
-        { icon: '🏢', label: 'Organization', value: info.org || '—', id: 'org' },
-        { icon: '🔗', label: 'ASN', value: info.asn || '—', id: 'asn', mono: true },
-        { icon: '⚡', label: 'Cloudflare Colo', value: info.colo || '—', id: 'colo' },
-        { icon: '📶', label: 'Latency (RTT)', value: info.rtt || '—', id: 'rtt' },
-      ],
-    },
+  const dataCards = [
+    { label: 'Location', value: location || '\u2014', span: 2 },
+    { label: 'Country', value: countryDisplay },
+    { label: 'Region', value: regionFull || '\u2014' },
+    { label: 'Coordinates', value: coords || '\u2014', mono: true },
+    { label: 'Postal', value: info.postal || '\u2014' },
+    { label: 'Timezone', value: info.timezone || '\u2014' },
+    { label: 'Organization', value: info.org || '\u2014', span: 2 },
+    { label: 'ASN', value: info.asn || '\u2014', mono: true },
+    { label: 'Latency', value: info.rtt || '\u2014' },
+    { label: 'Edge Node', value: info.colo || '\u2014' },
   ];
 
-  let rowIndex = 0;
-  const sectionsHtml = sections
+  const cardsHtml = dataCards
     .map(
-      (section) => {
-        const sectionRows = section.rows
-          .map((r) => {
-            const i = rowIndex++;
-            return `
-            <div class="info-row" style="animation-delay: ${i * 0.04}s">
-              <div class="info-icon">${r.icon}</div>
-              <div class="info-content">
-                <div class="info-label">${r.label}</div>
-                <div class="info-value${r.mono ? ' mono' : ''}" id="${r.id}">${r.value}</div>
-              </div>
-            </div>`;
-          })
-          .join('');
-
-        return `
-        <div class="info-section">
-          <div class="section-title">${section.title}</div>
-          <div class="info-card">${sectionRows}</div>
-        </div>`;
-      },
+      (c, i) => `
+      <div class="data-card${c.span === 2 ? ' span-2' : ''}" style="animation-delay: ${0.4 + i * 0.05}s">
+        <span class="data-label">${c.label}</span>
+        <span class="data-value${c.mono ? ' mono' : ''}">${c.value}</span>
+      </div>`,
     )
     .join('');
 
@@ -131,456 +105,476 @@ function htmlResponse(info) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IP Info — What's My IP?</title>
-  <meta name="description" content="Instantly see your public IP address, location, ISP, and more.">
+  <title>IP Info \u2014 What's My IP?</title>
+  <meta name="description" content="Instantly see your public IP address, geolocation, and network details.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --bg-primary: #0a0a0f;
-      --bg-card: rgba(255, 255, 255, 0.03);
-      --bg-card-hover: rgba(255, 255, 255, 0.06);
-      --border: rgba(255, 255, 255, 0.06);
-      --border-hover: rgba(255, 255, 255, 0.12);
-      --text-primary: #f0f0f5;
-      --text-secondary: rgba(255, 255, 255, 0.5);
-      --text-tertiary: rgba(255, 255, 255, 0.3);
-      --accent: #6c63ff;
-      --accent-glow: rgba(108, 99, 255, 0.15);
-      --accent-2: #00d4aa;
-      --accent-2-glow: rgba(0, 212, 170, 0.1);
-      --gradient-1: linear-gradient(135deg, #6c63ff 0%, #00d4aa 100%);
+      --navy-deep: #0b1221;
+      --navy-mid: #121d33;
+      --navy-surface: #182744;
+      --navy-border: rgba(255, 255, 255, 0.05);
+      --amber: #d4915c;
+      --amber-bright: #e8a76e;
+      --amber-glow: rgba(212, 145, 92, 0.12);
+      --sage: #7a9e8e;
+      --sage-dim: rgba(122, 158, 142, 0.5);
+      --text-bright: #e8e4df;
+      --text-mid: rgba(232, 228, 223, 0.6);
+      --text-dim: rgba(232, 228, 223, 0.3);
+      --serif: 'Instrument Serif', Georgia, serif;
+      --mono: 'IBM Plex Mono', 'Courier New', monospace;
     }
 
-    html { font-family: 'Inter', -apple-system, sans-serif; }
+    html { font-family: var(--mono); font-size: 14px; }
 
     body {
-      background: var(--bg-primary);
-      color: var(--text-primary);
+      background: var(--navy-deep);
+      color: var(--text-bright);
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       overflow-x: hidden;
       position: relative;
     }
 
-    /* Animated background */
+    /* Topographic ambient light */
     body::before {
       content: '';
       position: fixed;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
+      inset: 0;
       background:
-        radial-gradient(ellipse at 20% 50%, rgba(108, 99, 255, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(0, 212, 170, 0.06) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 80%, rgba(108, 99, 255, 0.04) 0%, transparent 50%);
-      animation: bgShift 20s ease-in-out infinite alternate;
+        radial-gradient(ellipse at 30% 20%, rgba(212, 145, 92, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 70% 80%, rgba(122, 158, 142, 0.05) 0%, transparent 60%);
       z-index: 0;
       pointer-events: none;
     }
 
-    @keyframes bgShift {
-      0%   { transform: translate(0, 0) rotate(0deg); }
-      100% { transform: translate(-3%, 2%) rotate(3deg); }
-    }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 480px;
-      padding: 24px;
-    }
-
-    /* Header */
-    .header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-
-    .header-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 100px;
-      background: var(--accent-glow);
-      border: 1px solid rgba(108, 99, 255, 0.2);
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-      animation: fadeInDown 0.5s ease;
-    }
-
-    .header-badge .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent-2);
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.8); }
-    }
-
-    h1 {
-      font-size: 28px;
-      font-weight: 800;
-      background: var(--gradient-1);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      margin-bottom: 6px;
-      animation: fadeInDown 0.5s ease 0.1s both;
-    }
-
-    .subtitle {
-      font-size: 14px;
-      color: var(--text-secondary);
-      font-weight: 400;
-      animation: fadeInDown 0.5s ease 0.2s both;
-    }
-
-    /* IP Hero */
-    .ip-hero {
-      text-align: center;
-      padding: 28px 20px;
-      margin-bottom: 24px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      position: relative;
-      overflow: hidden;
-      animation: fadeInUp 0.5s ease 0.3s both;
-    }
-
-    .ip-hero::before {
-      content: '';
-      position: absolute;
+    .topo-bg {
+      position: fixed;
       inset: 0;
-      background: var(--gradient-1);
-      opacity: 0.03;
+      z-index: 0;
+      overflow: hidden;
+      opacity: 0.12;
       pointer-events: none;
     }
 
-    .ip-hero-label {
-      font-size: 11px;
-      font-weight: 600;
+    .topo-bg svg { width: 100%; height: 100%; }
+
+    /* Grain texture */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      z-index: 1;
+      pointer-events: none;
+      mix-blend-mode: overlay;
+    }
+
+    .page {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 540px;
+      padding: 32px 24px;
+    }
+
+    /* ── Header ── */
+    .header {
+      margin-bottom: 48px;
+      animation: revealDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .brand {
+      font-family: var(--serif);
+      font-size: 20px;
+      font-style: italic;
+      color: var(--text-bright);
+      letter-spacing: -0.3px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 500;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      color: var(--text-tertiary);
-      margin-bottom: 10px;
+      color: var(--sage);
     }
 
-    .ip-hero-value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 32px;
-      font-weight: 500;
-      background: var(--gradient-1);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      letter-spacing: -0.5px;
+    .status-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--sage);
+      animation: blink 2.5s ease-in-out infinite;
     }
 
-    /* Info sections */
-    .info-section {
-      margin-bottom: 20px;
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
 
-    .section-title {
-      font-size: 11px;
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, var(--navy-border) 0%, rgba(212, 145, 92, 0.15) 50%, var(--navy-border) 100%);
+    }
+
+    /* ── IP Hero ── */
+    .ip-block {
+      text-align: center;
+      padding: 44px 20px 40px;
+      margin-bottom: 40px;
+      position: relative;
+      animation: revealUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+    }
+
+    .ip-block::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 1px solid var(--navy-border);
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    .ip-block::after {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 20%;
+      right: 20%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--amber), transparent);
+    }
+
+    .ip-overline {
+      font-size: 10px;
       font-weight: 600;
-      letter-spacing: 1px;
+      letter-spacing: 3px;
       text-transform: uppercase;
-      color: var(--text-tertiary);
-      margin-bottom: 8px;
-      padding-left: 4px;
+      color: var(--text-dim);
+      margin-bottom: 16px;
     }
 
-    .info-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
+    .ip-address {
+      font-family: var(--serif);
+      font-size: clamp(28px, 7vw, 42px);
+      font-weight: 400;
+      color: var(--amber-bright);
+      letter-spacing: -1px;
+      line-height: 1.1;
+      word-break: break-all;
     }
 
-    .info-row {
+    .ip-actions {
+      margin-top: 20px;
       display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border);
-      transition: background 0.2s;
-      animation: fadeInUp 0.4s ease both;
-    }
-
-    .info-row:last-child { border-bottom: none; }
-    .info-row:hover { background: var(--bg-card-hover); }
-
-    .info-icon {
-      font-size: 18px;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
       justify-content: center;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.03);
-      flex-shrink: 0;
-    }
-
-    .info-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .info-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: var(--text-tertiary);
-      margin-bottom: 2px;
-    }
-
-    .info-value {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .info-value.mono {
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--accent);
-    }
-
-    .copy-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px;
-      cursor: pointer;
-      color: var(--text-secondary);
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .copy-btn:hover {
-      background: var(--accent-glow);
-      border-color: rgba(108, 99, 255, 0.3);
-      color: var(--accent);
-      transform: scale(1.05);
-    }
-
-    .copy-btn.copied {
-      background: var(--accent-2-glow);
-      border-color: rgba(0, 212, 170, 0.3);
-      color: var(--accent-2);
-    }
-
-    .ip-copy {
-      margin-top: 16px;
-      gap: 6px;
-      padding: 8px 16px;
-      font-size: 12px;
-      font-weight: 500;
-      font-family: 'Inter', sans-serif;
-    }
-
-    /* API section */
-    .api-section {
-      margin-top: 24px;
-      animation: fadeInUp 0.5s ease 0.5s both;
-    }
-
-    .api-title {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: var(--text-tertiary);
-      margin-bottom: 10px;
-      padding-left: 4px;
-    }
-
-    .api-endpoints {
-      display: flex;
-      flex-direction: column;
       gap: 8px;
     }
 
-    .api-endpoint {
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border: 1px solid var(--navy-border);
+      border-radius: 2px;
+      background: var(--navy-mid);
+      color: var(--text-mid);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      border-color: var(--amber);
+      color: var(--amber);
+      background: var(--amber-glow);
+    }
+
+    .btn.copied {
+      border-color: var(--sage);
+      color: var(--sage);
+    }
+
+    .btn svg { flex-shrink: 0; }
+
+    /* Corner marks */
+    .corner { position: absolute; width: 8px; height: 8px; }
+    .corner::before, .corner::after { content: ''; position: absolute; background: var(--amber); }
+    .corner--tl { top: -1px; left: -1px; }
+    .corner--tl::before { top: 0; left: 0; width: 8px; height: 1px; }
+    .corner--tl::after { top: 0; left: 0; width: 1px; height: 8px; }
+    .corner--tr { top: -1px; right: -1px; }
+    .corner--tr::before { top: 0; right: 0; width: 8px; height: 1px; }
+    .corner--tr::after { top: 0; right: 0; width: 1px; height: 8px; }
+    .corner--bl { bottom: -1px; left: -1px; }
+    .corner--bl::before { bottom: 0; left: 0; width: 8px; height: 1px; }
+    .corner--bl::after { bottom: 0; left: 0; width: 1px; height: 8px; }
+    .corner--br { bottom: -1px; right: -1px; }
+    .corner--br::before { bottom: 0; right: 0; width: 8px; height: 1px; }
+    .corner--br::after { bottom: 0; right: 0; width: 1px; height: 8px; }
+
+    /* ── Data Grid ── */
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--navy-border);
+      border: 1px solid var(--navy-border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+
+    .data-card {
+      background: var(--navy-deep);
+      padding: 16px 18px;
+      transition: background 0.3s;
+      animation: revealUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .data-card:hover { background: var(--navy-mid); }
+    .data-card.span-2 { grid-column: span 2; }
+
+    .data-label {
+      display: block;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+
+    .data-value {
+      display: block;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-bright);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+    }
+
+    .data-value.mono { color: var(--sage); }
+
+    /* ── API Bar ── */
+    .api-bar {
+      display: flex;
+      gap: 1px;
+      background: var(--navy-border);
+      border: 1px solid var(--navy-border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 32px;
+      animation: revealUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.8s both;
+    }
+
+    .api-link {
+      flex: 1;
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      transition: all 0.2s;
-      cursor: pointer;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background: var(--navy-deep);
       text-decoration: none;
+      transition: all 0.25s;
     }
 
-    .api-endpoint:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--border-hover);
-      transform: translateX(4px);
-    }
+    .api-link:hover { background: var(--navy-mid); }
+    .api-link:hover .api-route { color: var(--amber); }
 
-    .api-method {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
+    .api-badge {
+      font-size: 9px;
       font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 4px;
-      background: var(--accent-glow);
-      color: var(--accent);
-      letter-spacing: 0.5px;
-      flex-shrink: 0;
+      letter-spacing: 1px;
+      padding: 2px 6px;
+      border: 1px solid var(--sage-dim);
+      border-radius: 2px;
+      color: var(--sage);
     }
 
-    .api-path {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      color: var(--text-primary);
-      flex: 1;
+    .api-route {
+      font-size: 12px;
+      color: var(--text-mid);
+      transition: color 0.25s;
     }
 
-    .api-desc {
-      font-size: 11px;
-      color: var(--text-tertiary);
+    .api-type {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-left: auto;
     }
 
-    /* Footer */
+    /* ── Footer ── */
     .footer {
       text-align: center;
-      margin-top: 32px;
-      font-size: 12px;
-      color: var(--text-tertiary);
-      animation: fadeInUp 0.5s ease 0.6s both;
+      animation: revealUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both;
     }
 
-    .footer a {
-      color: var(--accent);
+    .footer-text {
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+    }
+
+    .footer-text a {
+      color: var(--text-dim);
       text-decoration: none;
-      transition: opacity 0.2s;
+      border-bottom: 1px solid var(--navy-border);
+      transition: all 0.25s;
     }
 
-    .footer a:hover { opacity: 0.7; }
-
-    /* Animations */
-    @keyframes fadeInDown {
-      from { opacity: 0; transform: translateY(-12px); }
-      to { opacity: 1; transform: translateY(0); }
+    .footer-text a:hover {
+      color: var(--amber);
+      border-color: var(--amber);
     }
 
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Toast */
+    /* ── Toast ── */
     .toast {
       position: fixed;
-      bottom: 24px;
+      bottom: 28px;
       left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: rgba(0, 212, 170, 0.15);
-      border: 1px solid rgba(0, 212, 170, 0.3);
-      color: var(--accent-2);
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-size: 13px;
+      transform: translateX(-50%) translateY(60px);
+      background: var(--navy-surface);
+      border: 1px solid var(--sage-dim);
+      color: var(--sage);
+      padding: 8px 20px;
+      border-radius: 2px;
+      font-family: var(--mono);
+      font-size: 11px;
       font-weight: 500;
-      backdrop-filter: blur(12px);
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      letter-spacing: 0.5px;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 100;
       pointer-events: none;
     }
 
     .toast.show { transform: translateX(-50%) translateY(0); }
 
-    /* Responsive */
-    @media (max-width: 520px) {
-      .container { padding: 16px; }
-      .ip-hero-value { font-size: 24px; }
-      h1 { font-size: 24px; }
+    /* Animations */
+    @keyframes revealDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes revealUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 480px) {
+      .page { padding: 24px 16px; }
+      .ip-address { font-size: 26px; }
+      .data-grid { grid-template-columns: 1fr; }
+      .data-card.span-2 { grid-column: span 1; }
+      .api-bar { flex-direction: column; }
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
+  <div class="topo-bg">
+    <svg viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M-50 300Q100 250 200 280T400 260T600 290T850 250" stroke="rgba(122,158,142,0.3)" stroke-width="0.5" fill="none"/>
+      <path d="M-50 320Q120 280 220 300T420 280T620 310T850 270" stroke="rgba(122,158,142,0.25)" stroke-width="0.5" fill="none"/>
+      <path d="M-50 340Q140 310 240 320T440 300T640 330T850 290" stroke="rgba(122,158,142,0.2)" stroke-width="0.5" fill="none"/>
+      <path d="M-50 200Q80 160 180 190T380 170T580 200T850 160" stroke="rgba(212,145,92,0.2)" stroke-width="0.5" fill="none"/>
+      <path d="M-50 220Q100 180 200 210T400 190T600 220T850 180" stroke="rgba(212,145,92,0.15)" stroke-width="0.5" fill="none"/>
+      <path d="M-50 400Q130 370 230 390T430 370T630 400T850 360" stroke="rgba(122,158,142,0.15)" stroke-width="0.5" fill="none"/>
+      <path d="M-50 420Q150 390 250 410T450 390T650 420T850 380" stroke="rgba(122,158,142,0.1)" stroke-width="0.5" fill="none"/>
+      <path d="M-50 140Q60 100 160 130T360 110T560 140T850 100" stroke="rgba(212,145,92,0.1)" stroke-width="0.5" fill="none"/>
+      <path d="M-50 480Q170 450 270 470T470 450T670 480T850 440" stroke="rgba(122,158,142,0.08)" stroke-width="0.5" fill="none"/>
+      <circle cx="400" cy="300" r="80" stroke="rgba(212,145,92,0.08)" stroke-width="0.5" fill="none"/>
+      <circle cx="400" cy="300" r="120" stroke="rgba(212,145,92,0.06)" stroke-width="0.5" fill="none"/>
+      <circle cx="400" cy="300" r="160" stroke="rgba(212,145,92,0.04)" stroke-width="0.5" fill="none"/>
+    </svg>
+  </div>
+
+  <div class="page">
     <header class="header">
-      <div class="header-badge"><span class="dot"></span> Live</div>
-      <h1>IP Info</h1>
-      <p class="subtitle">Your public IP address &amp; network details</p>
+      <div class="header-top">
+        <div class="brand">ip info</div>
+        <div class="status"><span class="status-dot"></span>Live</div>
+      </div>
+      <div class="divider"></div>
     </header>
 
-    <div class="ip-hero">
-      <div class="ip-hero-label">Your IP Address</div>
-      <div class="ip-hero-value" id="ip">${info.ip}</div>
-      <button class="copy-btn ip-copy" onclick="copyIP()" title="Copy IP">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-        <span>Copy</span>
-      </button>
-    </div>
-
-    ${sectionsHtml}
-
-    <div class="api-section">
-      <div class="api-title">Developer API</div>
-      <div class="api-endpoints">
-        <a class="api-endpoint" href="/ip">
-          <span class="api-method">GET</span>
-          <span class="api-path">/ip</span>
-          <span class="api-desc">Plain text</span>
-        </a>
-        <a class="api-endpoint" href="/json">
-          <span class="api-method">GET</span>
-          <span class="api-path">/json</span>
-          <span class="api-desc">Full JSON</span>
-        </a>
+    <div class="ip-block">
+      <div class="corner corner--tl"></div>
+      <div class="corner corner--tr"></div>
+      <div class="corner corner--bl"></div>
+      <div class="corner corner--br"></div>
+      <div class="ip-overline">Your IP Address</div>
+      <div class="ip-address" id="ip">${info.ip}</div>
+      <div class="ip-actions">
+        <button class="btn" onclick="copyIP()" id="copyBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy
+        </button>
       </div>
     </div>
 
-    <div class="footer">
-      Powered by <a href="https://workers.cloudflare.com" target="_blank" rel="noopener">Cloudflare Workers</a>
+    <div class="data-grid">
+      ${cardsHtml}
     </div>
+
+    <div class="api-bar">
+      <a class="api-link" href="/ip">
+        <span class="api-badge">GET</span>
+        <span class="api-route">/ip</span>
+        <span class="api-type">text</span>
+      </a>
+      <a class="api-link" href="/json">
+        <span class="api-badge">GET</span>
+        <span class="api-route">/json</span>
+        <span class="api-type">json</span>
+      </a>
+    </div>
+
+    <footer class="footer">
+      <p class="footer-text">Powered by <a href="https://workers.cloudflare.com" target="_blank" rel="noopener">Cloudflare Workers</a></p>
+    </footer>
   </div>
 
-  <div class="toast" id="toast">✓ IP copied to clipboard</div>
+  <div class="toast" id="toast">\u2713 Copied to clipboard</div>
 
   <script>
     function copyIP() {
       const ip = document.getElementById('ip').textContent;
       navigator.clipboard.writeText(ip).then(() => {
-        const btn = document.querySelector('.copy-btn');
+        const btn = document.getElementById('copyBtn');
         btn.classList.add('copied');
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied';
         const toast = document.getElementById('toast');
         toast.classList.add('show');
         setTimeout(() => {
           toast.classList.remove('show');
           btn.classList.remove('copied');
+          btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy';
         }, 2000);
       });
     }
