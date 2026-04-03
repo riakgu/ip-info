@@ -88,6 +88,8 @@ curl https://your-worker.workers.dev/json
 
 ## Deployment
 
+### Option 1: CLI (Wrangler)
+
 1. Authenticate with Cloudflare
    ```sh
    npx wrangler login
@@ -98,16 +100,25 @@ curl https://your-worker.workers.dev/json
    npm run deploy
    ```
 
-3. *(Optional)* Set up a custom domain
+### Option 2: Dashboard (Manual)
 
-   Edit `wrangler.toml` to add your domain:
-   ```toml
-   [routes]
-   route = "ip.yourdomain.com/*"
-   zone_name = "yourdomain.com"
-   ```
+1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com) → **Workers & Pages** → **Create**
+2. Name your worker (e.g. `ip-info`) → click **Deploy**
+3. Click **Edit code** → paste the contents of [`src/index.js`](src/index.js)
+4. Click **Deploy**
 
-   Then add a CNAME record in your Cloudflare DNS pointing to your worker.
+> No CLI or build step needed — it's a single file with zero dependencies.
+
+### Custom Domain *(Optional)*
+
+Edit `wrangler.toml` to add your domain:
+```toml
+[routes]
+route = "ip.yourdomain.com/*"
+zone_name = "yourdomain.com"
+```
+
+Then add a CNAME record in your Cloudflare DNS pointing to your worker.
 
 
 ## License
